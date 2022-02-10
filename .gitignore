@@ -1,0 +1,8 @@
+*.o
+*.dot
+*.output
+miniL
+miniL-lex.cpp
+miniL-parser.cpp
+miniL-parser.hpp
+stack.hh
