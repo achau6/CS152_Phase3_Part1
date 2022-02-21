@@ -1,0 +1,130 @@
+ident -> IDENT main
+Declarations -> epsilon
+ident -> IDENT a
+Identifiers -> Identifier
+Declaration -> Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
+ident -> IDENT b
+Identifiers -> Identifier
+Declaration -> Identifiers COLON INTEGER
+ident -> IDENT c
+Identifiers -> Identifier
+Declaration -> Identifiers COLON INTEGER
+Declarations -> epsilon
+Declarations -> Declaration SEMICOLON Declarations
+Declarations -> Declaration SEMICOLON Declarations
+Declarations -> Declaration SEMICOLON Declarations
+ident -> IDENT b
+Var -> Identifier
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Statement -> Var ASSIGN Expression
+ident -> IDENT c
+Var -> Identifier
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Statement -> Var ASSIGN Expression
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+ident -> IDENT b
+Var -> Identifier
+Term -> Var
+MultExp -> Term
+ident -> IDENT c
+Var -> Identifier
+Term -> Var
+MultExp -> Term
+Expression -> MultExp
+Expression -> MultExp ADD Expression
+Statement -> Var ASSIGN Expression
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Statement -> WRITE Var
+
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Statement -> Var ASSIGN Expression
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Statement -> WRITE Var
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Statement -> Var ASSIGN Expression
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Statement -> WRITE Var
+
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Term -> Var
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Term -> Var
+MultExp -> Term
+ident -> IDENT c
+Var -> Identifier
+Term -> Var
+MultExp -> Term
+Expression -> MultExp
+Expression -> MultExp ADD Expression
+Term -> L_PAREN Expression R_PAREN
+MultExp -> Term MULT Term
+Expression -> MultExp
+Statement -> Var ASSIGN Expression
+ident -> IDENT a
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Var -> Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Statement -> WRITE Var
+Statements -> epsilon
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Function -> FUNCTION Identifier SEMICOLON BEGIN_PARAMS Declarations SEMICOLON END_PARAMS BEGIN_LOCALS Declarations SEMICOLON END_LOCALS BEGIN_BODY Statements SEMICOLON END_BODY
+Functions -> epsilon
+Functions -> Function Functions
+Program -> Functions

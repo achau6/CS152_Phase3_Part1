@@ -23,70 +23,14 @@ string decl_temp2(string s);
 string call_temp();
 string call_temp(int x);
 int count = 0;
-enum Type { Integer, Array, Add, Mult, Sub, Div, Mod, Params };
+enum Type { Integer, Array, Add, Mult, Sub, Div, Mod };
 struct CodeNode {
     std::string name;
-    string name2;
     std::string code;
     Type type;
     Type func;
-    string ret;
 };
 
-struct Symbol {
-   string name;
-   Type type;
-};
-
-struct Function {
-  std::string name;
-  std::vector<CodeNode> declarations;
-};
-
-std::vector <Function> symbol_table;
-
-
-Function *get_function() {
-  int last = symbol_table.size()-1;
-  return &symbol_table[last];
-}
-
-bool find(std::string value) {
-  Function *f = get_function();
-  for(int i=0; i < f->declarations.size(); i++) {
-    CodeNode *s = &f->declarations[i];
-    if (s->name == value) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void add_function_to_symbol_table(std::string value) {
-  Function f; 
-  f.name = value; 
-  symbol_table.push_back(f);
-}
-
-void add_variable_to_symbol_table(std::string *value, Type t) {
-  CodeNode s;
-  //s.name = value->code;
-  s.type = t;
-  Function *f = get_function();
-  f->declarations.push_back(s);
-}
-
-void print_symbol_table(void) {
-  printf("symbol table:\n");
-  printf("--------------------\n");
-  for(int i=0; i<symbol_table.size(); i++) {
-    printf("function: %s\n", symbol_table[i].name.c_str());
-    for(int j=0; j<symbol_table[i].declarations.size(); j++) {
-      printf("  locals: %s\n", symbol_table[i].declarations[j].name.c_str());
-    }
-  }
-  printf("--------------------\n");
-}
 
 %}
 
@@ -98,7 +42,6 @@ void print_symbol_table(void) {
   int ival;
   char* identval;
   struct CodeNode* code_node;
-  //struct CodeNode code_node;
 }
 
 %define parse.error verbose
@@ -134,7 +77,6 @@ void print_symbol_table(void) {
 %type <code_node> BoolExp
 %type <code_node> Comp
 %type <code_node> Expression
-%type <code_node> Expressions
 %type <code_node> MultExp
 %type <code_node> Term
 %type <code_node> ElseStatement
@@ -225,10 +167,6 @@ Declarations: %empty {
 
 Declaration: Identifiers COLON INTEGER {
    //printf("Declaration -> Identifiers COLON INTEGER\n");
-   //CodeNode *value = $1;
-   //Type t = Integer;
-   //add_variable_to_symbol_table(value, t);
-
    CodeNode *code_node = new CodeNode;
    std::string id = $1->code;
    code_node->code = std::string(". ") + id + std::string("\n");
@@ -277,41 +215,75 @@ Statement: Var ASSIGN Expression {
       a[0] = 1;
       a = 1;
    */
-   node->code = string("[=] ") + code_node1->code + string(", ") + code_node2->code + string("\n");
-   
-   if(code_node2->func == Add || code_node2->func == Sub) {
-      node->code = code_node2->code + string("\n") 
-         + string("= ") + code_node1->code + string(", ") + code_node2->name + string("\n");
-   
-   } else if(code_node2->func == Mult || code_node2->func == Div || code_node2->func == Mod) {
-      printf("Mult in Statement");
-      node->code = code_node2->code + string("\n") + string("= ") 
-         + code_node1->code + string(", ") + code_node2->name + string("\n");
-
-
-   }
-   if(code_node2->func == Params) {
-      printf("Param");
-      node->code = string("") + code_node2->code + string("\n") 
-         + string("= ") +  code_node1->code + string(", ") + code_node2->name + string("\n");
-   }
-   
-   if(code_node1->func == Array) {
-      node->code = string(".[] ") + code_node1->code + string(", ") + code_node2->code + string("\n");
-      if(code_node2->func == Add) {
-         //node->code = string(". ") + code_node2->name + string("\n");
-         node->code = code_node2->code + string("\n");
-         node->code += string("[]= ") + code_node1->code + string(", ") + code_node2->name + string("\n");
-      }
+   //node->code = string("This is the starting Statement ");
+   if(code_node2->type == Array) {
+      printf("Statement Array");
       if(code_node2->func == Mult) {
-         printf("Mult in Array in Statement");
-         //node->code = string("[.] ") + code_node2->name + string("\n");
-         node->code = code_node2->code + string("\n");
-         //node->code += string("[]= ") + code_node1->code + string(", ") 
-         //   + code_node1->name + string("\n");
-         
+         node->code = code_node2->code + string("\n");  
       }
+      node->code = code_node2->code + string("\n");
+
+      
+   } else if(code_node1->type == Array) {
+      if(code_node2->func == Add) {
+         printf("add");
+         string *temp = temp_gen();
+         node->code = ". " + *temp + string("\n") + string("+ ") 
+            + *temp + string(", ") + code_node2->code + string("\n"); 
+         node->code += string("[]= ") + code_node1->code + *temp + string("\n");
+      } else if(code_node2->func == Sub) {
+         printf("Sub");
+         string *temp = temp_gen();
+         node->code = ". " + *temp + string("\n") + string("- ") 
+            + *temp + string(", ") + code_node2->code + string("\n"); 
+         node->code += string("[]= ") + code_node1->code + *temp + string("\n");
+      } else {
+         node->code = string("[]= ") + code_node1->code + string(", ") + code_node2->code + string("\n");
+      }
+   } else {
+      if(code_node2->func == Add) {
+         printf("add");
+         string *temp = temp_gen();
+         node->code = ". " + *temp + string("\n") + string("+ ") 
+            + *temp + string(", ") + code_node2->code + string("\n"); 
+         node->code += string("= ") + code_node1->code + string(", ") + *temp + string("\n");
+
+      } else if(code_node2->func == Sub) {
+         //printf("Sub");
+         string *temp = temp_gen();
+         node->code = ". " + *temp + string("\n") + string("- ") 
+            + *temp + string(", ") + code_node2->code + string("\n"); 
+         node->code += string("= ") + code_node1->code + string(", ") + *temp + string("\n");
+
+      } else if(code_node2->func == Mult) {
+         //printf("Sub");
+         string *temp = temp_gen();
+         node->code = ". " + *temp + string("\n") + string("* ") 
+            + *temp + string(", ") + code_node2->code + string("\n"); 
+         node->code += string("= ") + code_node1->code + string(", ") + *temp + string("\n");
+
+      } else if(code_node2->func == Div) {
+         printf("Div");
+         string *temp = temp_gen();
+         node->code = ". " + *temp + string("\n") + string("/ ") 
+            + *temp + string(", ") + code_node2->code + string("\n"); 
+         node->code += string("= ") + code_node1->code + string(", ") + *temp + string("\n");
+
+      } else if(code_node2->func == Mod) {
+         printf("Mod");
+         string *temp = temp_gen();
+         node->code = ". " + *temp + string("\n") + string("% ") 
+            + *temp + string(", ") + code_node2->code + string("\n"); 
+         node->code += string("= ") + code_node1->code + string(", ") + *temp + string("\n");
+
+      } else {
+         printf("None");
+         node->code = string("= ") + code_node1->code + string(", ") + code_node2->code + string("\n");
+      }
+      
    }
+
+   
 
    $$ = node;
 
@@ -344,11 +316,11 @@ Statement: Var ASSIGN Expression {
    //printf("Statement -> WRITE Var\n");
    CodeNode *code_node1 = $2;
    CodeNode *node = new CodeNode;
-   if(code_node1->func == Array) {
+   if(code_node1->type == Array) {
       string *temp = temp_gen();
-      node->code = ". " + *temp + string("\n");
-      node->code += string("=[] ") + *temp + string(", ") + code_node1->code + string("\n");
-      node->code += string(".> ") + *temp + string("\n");
+      node->code = string(". ") + *temp + string("\n") + string("=[] ") 
+         + *temp + string(", ") + code_node1->code + string("\n") 
+         + string(".> ") + *temp + string("\n");
    } else {
       node->code = string(".> ") + code_node1->code + string("\n");
    }
@@ -370,8 +342,7 @@ Statement: Var ASSIGN Expression {
    //printf("Statement -> RETURN Expression\n");
    CodeNode *node = new CodeNode;
    CodeNode *code_node1 = $2;
-   node->code = code_node1->ret + string("") + code_node1->code + string("\n") 
-      + std::string("ret ") + code_node1->name + string("\n");
+   node->code = std::string("ret ") + code_node1->code + string("\n");
    $$ = node;
 
 };
@@ -437,29 +408,21 @@ Comp: ASSIGN {
 
 };
 
-Expressions: %empty {
-   //printf("\n");
-   CodeNode *node = new CodeNode;
-   node->code = string("");
-   $$ = node;
-}  | COMMA Expression Expressions {
-   CodeNode *node = new CodeNode;
-   CodeNode *code_node1 = $2;
-   node->code = code_node1->code;
-   node->func = code_node1->func;
-   node->name = code_node1->name;
-   $$ = node;
-};
-
 Expression: MultExp {
    //printf("Expression -> MultExp\n");
    CodeNode *code_node1 = $1;
    CodeNode *node = new CodeNode;
    node->code = code_node1->code;
-   node->func = code_node1->func;
-   node->name = code_node1->name;
-   node->name2 = code_node1->name2;
-   node->ret = code_node1->ret; //only needed here to return exp
+   if(code_node1->type == Array) {
+      node->type = Array;
+   } 
+   if(code_node1->func == Mult) {
+      node->func = Mult;
+   } else if(code_node1->func == Div) {
+      node->func = Div;
+   } else if(code_node1->func == Mod) {
+      node->func = Mod;
+   }
    $$ = node;
 
 } | MultExp ADD Expression{
@@ -467,43 +430,21 @@ Expression: MultExp {
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
-   //printf("Expression Add");
-   if(code_node1->func == Array) {
-      /*printf("Array in Expression Add ");
-      string *temp = temp_gen();
-      node->code = string(". ") + call_temp(0) + string("\n");
-      node->code += string("=[] ") + call_temp(0) + string(", ") + code_node1->code + string("\n");
-     
-      string *temp1 = temp_gen();
-      node->code += ". " + call_temp(0) + string("\n");
-      node->code += string("+ ") + call_temp(0) + string(", ") 
-         + call_temp(1) + string(", ") + code_node2->code;
-      node->name = *temp1;*/
+   node->func = Add;
+   if(code_node1->type == Array) {      
+      node->type = Array;
+   }
+   if(code_node2->type == Array) {    
 
-      printf("Array in Expression Add1 ");
-      string *temp2 = temp_gen();
-      string *temp = temp_gen();
-      node->code = string(". ") + *temp + string("\n");
-      node->code += string("=[] ") + *temp + string(", ") + code_node1->code + string("\n");
-     
-      string *temp1 = temp_gen();
-      node->code += ". " + *temp1 + string("\n");
-      node->code += string("+ ") + *temp1 + string(", ") 
-         + *temp + string(", ") + code_node2->code;
-      node->name = *temp2;
-      node->name2 = *temp1;
+   }
+   if(code_node1->func == Mult || code_node1->type == Array) {
+      node->code += code_node1->code + string("\n");
       
    } else {
-      printf("Else in Expression Add ");
-      string *temp = temp_gen();
-      node->code = string(". ") + *temp + string("\n");
-      node->code += string("+ ") + *temp + string(", ") 
-         + code_node1->code + string(", ") + code_node2->code;
-      node->name = *temp;
-      node->ret = string("= ") + code_node1->code + string(", $0\n") 
-         + string("= ") + code_node2->code + string(", $1\n");   
+      //string *temp = temp_gen();
+      //node->code += string(". ") + *temp + string("\n");
+      node->code += code_node1->code + string(", ") + code_node2->code + string("");
    }
-   node->func = Add;
    $$ = node;
 
 } | MultExp SUB Expression{
@@ -512,11 +453,18 @@ Expression: MultExp {
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
    node->func = Sub;
-   string *temp = temp_gen();
-   node->code = string(". ") + *temp + string("\n");
-   node->code += string("- ") + *temp + string(", ") 
-      + code_node1->code + string(", ") + code_node2->code;
-   node->name = *temp;
+   if(code_node1->type == Array) {      
+      node->type = Array;
+   }
+   if(code_node2->type == Array) {    
+
+   }
+   if(code_node1->func == Mult || code_node1->type == Array) {
+      node->code += code_node1->code + string("\n");
+      
+   } else {
+      node->code += code_node1->code + string(", ") + code_node2->code + string("");
+   }
    $$ = node;
 
 }; 
@@ -527,63 +475,52 @@ MultExp: Term {
    CodeNode *code_node1 = $1;
    CodeNode *node = new CodeNode;
    node->code = code_node1->code;
-   node->func = code_node1->func;
-   node->name = code_node1->name;
-   node->name2 = code_node1->name2;
-   node->ret = code_node1->ret;
+   if(code_node1->type == Array) {
+      node->type = Array;
+   }
    $$ = node;
+   
 
 } | Term MULT Term{
    //printf("MultExp -> Term MULT Term\n");
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
-    if(code_node1->func == Array) {
-      printf("Mult in Array ");
-      //string *temp = temp_gen();
-      node->code = string("{.} ") + code_node2->name + string("\n");
-      node->code += string("=[] ") + code_node2->name + string(", ") + code_node1->code + string("\n");
-      
-      //string *temp2 = temp_gen();
-      //node->code += string(". ") + *temp2 + string("\n");
-      //node->code += string("=[] ") + *temp2 + string(", ") + code_node2->code;
-      node->code += string("") + code_node2->code + string("\n");
-
-     
-      string *temp1 = temp_gen();
-      node->code += string(". ") + *temp1 + string("\n");
-      node->code += string("* ") + *temp1 + string(", ") + code_node2->name + string(", ") 
-         + code_node2->name2 + string("\n");
-
-      node->code += string("[]= ") + code_node1->code + string(", ") + *temp1;
-      node->name = *temp1;
-
-      /*string *temp = temp_gen();
-      node->code = string(". ") + call_temp(3) + string("\n");
-      node->code += string("=[] ") + call_temp(3) + string(", ") + code_node1->code + string("\n");
-     
-      node->code += string("") + code_node2->code + string("\n");
-
-      string *temp1 = temp_gen();
-      node->code += string(". ") + call_temp(1) + string("\n");
-      node->code += string("* ") + call_temp(1) + string(", ") + call_temp(4) + string(", ") 
-         + code_node2->name + string("\n");
-
-      node->code += string("[]= ") + code_node1->code + string(", ") + *temp1;
-      node->name = *temp1;*/
-      
-   } else {
-      printf("Else ");
-      string *temp = temp_gen();
-      node->code = string(". ") + *temp + string("\n");
-      node->code += string("* ") + *temp + string(", ") 
-         + code_node1->code + string(", ") + code_node2->code;
-      node->name = *temp;
-      node->ret = string("= ") + code_node1->code + string(", $0\n") 
-         + string("= ") + code_node2->code + string(", $1\n");
-   }
    node->func = Mult;
 
+   /*
+      node->code += 
+   */
+   if(code_node1->type == Array) {
+      //printf("array1");
+      string *temp1 = temp_gen();
+      node->code += string(". ") + *temp1 + string("\n") 
+         + string("=[] ") + *temp1 + string(", ") + code_node1->code + string("\n");
+      node->type = Array;
+   }
+   if(code_node2->type == Array) {
+      //printf("array2");
+      string *temp2 = temp_gen();
+      node->code += string(". ") + *temp2 + string("\n") 
+         + string("=[] ") + *temp2 + string(", ") + code_node2->code + string("");
+      node->type = Array;
+   }
+   if(code_node1->type == Array && code_node2->type == Array) {
+      string *temp3 = temp_gen();
+      node->code += string(". ") + *temp3 + string("\n");
+      node->code += string("+ ") + call_temp(1) + string(", ") + call_temp(2) + string(", ")
+         + code_node2->code + string(""); 
+         //Line 26 error here. Expected: + _temp6, _temp5, c Got: + _temp6, _temp5, a, 1
+      string *temp4 = temp_gen();
+      node->code += string(". ") + *temp4 + string("\n");
+      node->code += string("* ") + *temp4 + string(", ") + call_temp(4)
+         + string(", ") + call_temp(2);  
+      node->code += string("\n[]= ") + code_node1->code + string(", ") + *temp4;
+      //Line 26 error here. Expected: []= a, 3, _temp7 Got: []= a, 0, _temp7
+   } else {
+      node->code += code_node1->code + string(", ") + code_node2->code + string("");
+   }
+   
    $$ = node;
 
 } | Term DIV Term{
@@ -592,12 +529,39 @@ MultExp: Term {
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
    node->func = Div;
-   string *temp = temp_gen();
-   node->code = string(". ") + *temp + string("\n");
-   node->code += string("/ ") + *temp + string(", ") 
-      + code_node1->code + string(", ") + code_node2->code;
-   node->name = *temp;
-  
+
+   /*
+      node->code += 
+   */
+   if(code_node1->type == Array) {
+      //printf("array1");
+      string *temp1 = temp_gen();
+      node->code += string(". ") + *temp1 + string("\n") 
+         + string("=[] ") + *temp1 + string(", ") + code_node1->code + string("\n");
+      node->type = Array;
+   }
+   if(code_node2->type == Array) {
+      //printf("array2");
+      string *temp2 = temp_gen();
+      node->code += string(". ") + *temp2 + string("\n") 
+         + string("=[] ") + *temp2 + string(", ") + code_node2->code + string("");
+      node->type = Array;
+   }
+   if(code_node1->type == Array && code_node2->type == Array) {
+      string *temp3 = temp_gen();
+      node->code += string(". ") + *temp3 + string("\n");
+      node->code += string("+ ") + call_temp(1) + string(", ") + call_temp(2) + string(", ")
+         + code_node2->code + string(""); 
+         //Line 26 error here. Expected: + _temp6, _temp5, c Got: + _temp6, _temp5, a, 1
+      string *temp4 = temp_gen();
+      node->code += string(". ") + *temp4 + string("\n");
+      node->code += string("* ") + *temp4 + string(", ") + call_temp(4)
+         + string(", ") + call_temp(2);  
+
+   } else {
+      node->code += code_node1->code + string(", ") + code_node2->code + string("");
+   }
+   
    $$ = node;
 
 } | Term MOD Term{
@@ -606,11 +570,38 @@ MultExp: Term {
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
    node->func = Mod;
-   string *temp = temp_gen();
-   node->code = string(". ") + *temp + string("\n");
-   node->code += string("% ") + *temp + string(", ") 
-      + code_node1->code + string(", ") + code_node2->code;
-   node->name = *temp;
+
+   /*
+      node->code += 
+   */
+   if(code_node1->type == Array) {
+      //printf("array1");
+      string *temp1 = temp_gen();
+      node->code += string(". ") + *temp1 + string("\n") 
+         + string("=[] ") + *temp1 + string(", ") + code_node1->code + string("\n");
+      node->type = Array;
+   }
+   if(code_node2->type == Array) {
+      //printf("array2");
+      string *temp2 = temp_gen();
+      node->code += string(". ") + *temp2 + string("\n") 
+         + string("=[] ") + *temp2 + string(", ") + code_node2->code + string("");
+      node->type = Array;
+   }
+   if(code_node1->type == Array && code_node2->type == Array) {
+      string *temp3 = temp_gen();
+      node->code += string(". ") + *temp3 + string("\n");
+      node->code += string("+ ") + call_temp(1) + string(", ") + call_temp(2) + string(", ")
+         + code_node2->code + string(""); 
+         //Line 26 error here. Expected: + _temp6, _temp5, c Got: + _temp6, _temp5, a, 1
+      string *temp4 = temp_gen();
+      node->code += string(". ") + *temp4 + string("\n");
+      node->code += string("* ") + *temp4 + string(", ") + call_temp(4)
+         + string(", ") + call_temp(2);  
+
+   } else {
+      node->code += code_node1->code + string(", ") + code_node2->code + string("");
+   }
    
    $$ = node;
 
@@ -621,18 +612,16 @@ Term:  Var {
    CodeNode *node = new CodeNode;
    CodeNode *code_node1 = $1;
    node->code = code_node1->code;
-   node->func = code_node1->func;
-   node->name = code_node1->name;
-   node->name2 = code_node1->name2;
+   if(code_node1->type == Array) {
+      node->type = Array;
+   }
    $$ = node;
    
 
 } | NUMBER {
    //printf("Term -> NUMBER\n");
    CodeNode *node = new CodeNode;
-   string code = to_string($1);
-   node->code = code;
-   
+   node->code = to_string($1);
    $$ = node;
 
 } | L_PAREN Expression R_PAREN {
@@ -640,60 +629,35 @@ Term:  Var {
    CodeNode *node = new CodeNode;
    CodeNode *code_node1 = $2;
    node->code = code_node1->code;
-   node->func = code_node1->func;
-   node->name = code_node1->name;
-   node->name2 = code_node1->name2;
+   if(code_node1->type == Array) {
+      node->type = Array;
+   }
+   if(code_node1->func == Mult) {
+      node->func = Mult;
+   }
+
    $$ = node;
 
 } | Identifier L_PAREN Expression R_PAREN {
-   //printf("Term -> L_PAREN Expression R_PAREN\n");
+   printf("Term -> L_PAREN Expression R_PAREN\n");
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
-   node->code = code_node1->code;
-   //node->func = Params;
    $$ = node;
 
-} | Identifier L_PAREN Expression Expressions R_PAREN { /*Check this rule*/
-   //printf("Term -> L_PAREN Expression COMMA R_PAREN\n"); 
+} | Identifier L_PAREN Expression COMMA R_PAREN { /*Check this rule*/
+   printf("Term -> L_PAREN Expression COMMA R_PAREN\n"); 
    CodeNode *node = new CodeNode;
-   CodeNode *code_node1 = $3;
-   CodeNode *code_node2 = $4;
-   CodeNode *code_node3 = $1;
-   if(code_node2->func == Add) {
-      printf("Add in Param");
-      node->code = string("param ") + code_node1->code + string("\n")
-         + code_node2->code + string("\n");
-      //string *temp = temp_gen();
-      node->code += string("param ") + code_node2->name + string("\n");
-      string *temp1 = temp_gen();
-      node->code += ". " + *temp1 + string("\n");
-      node->code += "call " + code_node3->code + string(", ") + *temp1 + string("");
-      node->name = *temp1;
-
-   } else {
-      printf("Just Param");
-      node->code = string("param ") + code_node1->code + string("\n")
-         + string("param ") + code_node2->code + string("\n");
-      string *temp = temp_gen();
-      node->code += ". " + *temp + string("\n");
-      node->code += "call " + code_node3->code + string(", ") + *temp;
-      node->name = *temp;
-   }
-   node->func = Params;
    $$ = node;
 
 }; 
 
 Var: Identifier {
    //printf("Var -> Identifier\n");
-   CodeNode *node = new CodeNode;
-   CodeNode *code_node1 = $1;
-   node->code = code_node1->code;
-   node->func = code_node1->func;
-   node->name = code_node1->name;
-   
-   $$ = node;
+   CodeNode *code_node = new CodeNode;
+   std::string id = $1->code;
+   code_node->code = id;
+   $$ = code_node;
    
 
 } | Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET {
@@ -701,9 +665,8 @@ Var: Identifier {
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
+   node->type = Array;
    node->code = code_node1->code + string(", ") + code_node2->code + string("");
-   node->func = Array;
-   //node->name = code_node1->name;
    $$ = node;
 
 /*} | Identifier L_SQUARE_BRACKET Expression R_SQUARE_BRACKET ASSIGN Expression {
@@ -761,7 +724,6 @@ int main(int argc, char **argv) {
          printf("Error Open File %s\n", argv[0]);
       }
    }
-   print_symbol_table();
    yyparse();
    return 0;
 }

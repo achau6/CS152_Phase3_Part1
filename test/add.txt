@@ -1,0 +1,52 @@
+ident -> IDENT main
+Declarations -> epsilon
+ident -> IDENT a
+Identifiers -> Identifier
+Declaration -> Identifiers COLON INTEGER
+ident -> IDENT b
+Identifiers -> Identifier
+Declaration -> Identifiers COLON INTEGER
+ident -> IDENT c
+Identifiers -> Identifier
+Declaration -> Identifiers COLON INTEGER
+Declarations -> epsilon
+Declarations -> Declaration SEMICOLON Declarations
+Declarations -> Declaration SEMICOLON Declarations
+Declarations -> Declaration SEMICOLON Declarations
+ident -> IDENT a
+Var -> Identifier
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Statement -> Var ASSIGN Expression
+ident -> IDENT b
+Var -> Identifier
+Term -> NUMBER
+MultExp -> Term
+Expression -> MultExp
+Statement -> Var ASSIGN Expression
+ident -> IDENT c
+Var -> Identifier
+ident -> IDENT a
+Var -> Identifier
+Term -> Var
+MultExp -> Term
+ident -> IDENT b
+Var -> Identifier
+Term -> Var
+MultExp -> Term
+Expression -> MultExp
+Expression -> MultExp ADD Expression
+Statement -> Var ASSIGN Expression
+ident -> IDENT c
+Var -> Identifier
+Statement -> WRITE Var
+Statements -> epsilon
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Function -> FUNCTION Identifier SEMICOLON BEGIN_PARAMS Declarations SEMICOLON END_PARAMS BEGIN_LOCALS Declarations SEMICOLON END_LOCALS BEGIN_BODY Statements SEMICOLON END_BODY
+Functions -> epsilon
+Functions -> Function Functions
+Program -> Functions

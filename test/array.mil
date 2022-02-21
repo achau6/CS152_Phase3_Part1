@@ -1,0 +1,34 @@
+func main
+.[] a, 20
+. b
+. c
+= b, 3
+= c, 5
+. _temp0
++ _temp0, b, c
+[]= a, 0, _temp0
+. _temp1
+=[] _temp1, a, 0
+.> _temp1
+[]= a, 1, 100
+. _temp2
+=[] _temp2, a, 1
+.> _temp2
+[]= a, 2, 200
+. _temp3
+=[] _temp3, a, 2
+.> _temp3
+. _temp4
+=[] _temp4, a, 0
+. _temp5
+=[] _temp5, a, 1
+. _temp6
++ _temp6, _temp5, c
+. _temp7
+* _temp7, _temp4, _temp6
+[]= a, 3, _temp7
+. _temp8
+=[] _temp8, a, 3
+.> _temp8
+endfunc
+
