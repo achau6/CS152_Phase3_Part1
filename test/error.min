@@ -1,0 +1,18 @@
+function main;
+beginparams
+endparams
+beginlocals
+
+  a : integer;
+  b : integer;
+  c : integer;
+
+endlocals
+
+beginbody
+  ## This is an error
+  ## error := 150;
+
+  a := a + 12; ## + a, a, 12
+
+endbody

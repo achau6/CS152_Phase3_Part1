@@ -4,6 +4,7 @@
 %{
 #include <string>
 #include <stdio.h>
+#include <algorithm>
 #include <vector>
 #include <iostream>
 #include "lib.h"
@@ -11,6 +12,7 @@
 #include "stdbool.h"
 using namespace std;
 #include <stdlib.h>
+extern int line;
 
 void yyerror(const char *msg);
 extern int yylex();
@@ -22,8 +24,21 @@ string decl_temp2(string *s);
 string decl_temp2(string s);
 string call_temp();
 string call_temp(int x);
-int count = 0;
+int counts = 0;
 enum Type { Integer, Array, Add, Mult, Sub, Div, Mod, Params };
+vector<string> reserve_words { 
+   "pee", "function", "beginparams", "endparams", "beginlocals", "endlocals", "beginbody", "endbody", "integer", "array", "of", "if", "then", "endif", "else", "while", "do", "beginloop", "endloop", "continue", "break", "read", "write", "not", "true", "false", "return"
+};
+
+vector<string> confirm_words {
+   "add", "sub", "mult", "div", "mod"
+};
+
+//make sure 1 main is declare X
+//make sure rhs var is validate X <- technically
+//array <= 0 X
+//validate functions like add() and not addy() X
+
 struct CodeNode {
     std::string name;
     string name2;
@@ -33,59 +48,201 @@ struct CodeNode {
     string ret;
 };
 
-struct Symbol {
+void add_symb_table(int i, string node, Type t);
+void check_dup_table();
+void print_table();
+void check_type();
+void check_exist();
+void check_existRHS();
+void check_statement(string node);
+void add_main(string node);
+void check_main();
+void clear_vectors();
+void print_sym_table();
+
+struct collection {
    string name;
+   bool exist;
    Type type;
 };
 
-struct Function {
-  std::string name;
-  std::vector<CodeNode> declarations;
-};
+vector<collection> sym_table;
+vector<collection> sym_table2;
+vector<collection> sym_table3;
+vector<string> main_hold;
 
-std::vector <Function> symbol_table;
-
-
-Function *get_function() {
-  int last = symbol_table.size()-1;
-  return &symbol_table[last];
+void clear_vectors() {
+   cout<<"Start SYMBOL TABLE--------------"<<endl;
+   for(int i = 0; i < sym_table.size(); i ++) {
+      cout<<sym_table[i].name<<endl;
+   }
+   cout<<"END SYMBOL TABLE--------------"<<endl;
+   sym_table.clear();
+   sym_table2.clear();
+   sym_table3.clear();
+}
+void add_main(string node) {
+   main_hold.push_back(node);
 }
 
-bool find(std::string value) {
-  Function *f = get_function();
-  for(int i=0; i < f->declarations.size(); i++) {
-    CodeNode *s = &f->declarations[i];
-    if (s->name == value) {
-      return true;
-    }
-  }
-  return false;
+void check_main() {
+   bool flag = false;
+   for(int i = 0; i < main_hold.size(); i ++) {
+      //cout<<"\n"<<"start: "<<main_hold[i]<<endl; 
+      if(main_hold[i] == "main") {
+         //cout<<"HEPPEN"<<endl;
+         flag = true;
+      }
+   }
+   if(flag == false) {
+      cout<<"There is no declare Main "<<endl;
+      exit(0);
+   }
+}  
+
+void add_symb_table(int i, string node, Type t) {
+   string id = node;
+   bool word = true;
+   int currline = 0;
+   for(int i = 0; i < reserve_words.size(); i ++) {
+      if(node == reserve_words[i]) {
+         currline = i + 4 + 2;
+         word = false;
+      }  
+   }
+   if(word == false) {
+      cout<<"ERROR: Line: "<< currline << " This is a reserve word"<<endl;
+      exit(0);
+   } else if (word == true) {
+      if(i == 1) {
+         sym_table.push_back({id, false, t});
+      } else if(i == 2) {
+         if(t == Array){
+            id = (id.front());
+            sym_table2.push_back({id, false, t});
+         } else {
+            sym_table2.push_back({id, false, t});
+         }
+      } else if(i == 3) {
+         sym_table3.push_back({id, false, t});
+      }
+   }
 }
 
-void add_function_to_symbol_table(std::string value) {
-  Function f; 
-  f.name = value; 
-  symbol_table.push_back(f);
+void check_dup_table() {
+   //cout << "Check Table: " << sym_table2.size() << endl;
+   int currline = 0;
+   for(int i = 0; i < sym_table.size(); i ++) {
+         //cout<<"Name: "<<sym_table[i].name <<endl;
+         for(int j = 0; j < i; j ++) {
+            if(i != j) {
+               if(sym_table[i].name == sym_table[j].name) {
+                  currline = i + 4 + 1; //curr + statement + 1
+                  cout << "ERROR: Line: "<< currline << " Redefination of "<< sym_table[i].name << endl;
+                  exit(0);
+               }
+            }
+         }
+   }
 }
 
-void add_variable_to_symbol_table(std::string *value, Type t) {
-  CodeNode s;
-  //s.name = value->code;
-  s.type = t;
-  Function *f = get_function();
-  f->declarations.push_back(s);
+void check_type() {
+   int currline = 0;
+   for(int i = 0; i < sym_table2.size(); i ++) {
+      for(int j = 0; j < sym_table.size(); j ++) {
+         if(sym_table2[i].name == sym_table[j].name && sym_table[j].type == Array) {
+            if(sym_table2[i].type != Array) {
+               currline = i + 7 + sym_table.size();
+               cout<<"ERROR: Line: "<< currline << " Array should have index"<<endl;
+               exit(0);
+            } 
+         } else if(sym_table2[i].name == sym_table[j].name && sym_table[j].type == Integer) {
+            if(sym_table2[i].type != Integer) {
+               currline = i + 7 + sym_table.size();
+               cout<<"ERROR: Line: "<<sym_table2[i].name<<" "<< currline << " Integer should not have index"<<endl;
+               exit(0);
+            }
+         }
+      }
+   }
+
 }
 
-void print_symbol_table(void) {
-  printf("symbol table:\n");
-  printf("--------------------\n");
-  for(int i=0; i<symbol_table.size(); i++) {
-    printf("function: %s\n", symbol_table[i].name.c_str());
-    for(int j=0; j<symbol_table[i].declarations.size(); j++) {
-      printf("  locals: %s\n", symbol_table[i].declarations[j].name.c_str());
-    }
-  }
-  printf("--------------------\n");
+void check_statement(string node) {
+   bool word = true;
+   int currline = 0;
+   //cout<<"NAME: "<<node<<endl;
+   for(int i = 0; i < confirm_words.size(); i ++) {
+      //cout<<"NAME: "<<node<<" "<<confirm_words[i]<<endl;
+      if(node == confirm_words[i]) {
+         word = false;
+      }  
+   }
+   if(word == true) {
+      currline = 6 + 1 + sym_table.size() + sym_table2.size();
+      cout<<"ERROR: Line: "<< currline << " This is a reserve word "<<node<<endl;
+      exit(0);
+   } 
+}
+
+void check_existRHS() {
+   bool existed = false;
+   int currline = 0;
+   for(int i = 0; i < sym_table3.size(); i++) {
+      if(sym_table3[i].name.length() == 1) {
+         for(int j = 0; j < sym_table.size(); j++) {
+            //cout<<"Statement: "<<sym_table3[i].name<<", "<<sym_table[j].name<<endl;
+            currline = line; 
+            //has trouble detecting errors like a = [b + c]
+               if(sym_table3[i].name == sym_table[j].name || isdigit(*(sym_table3[i].name.c_str()))==true) {
+                  existed = true;
+                  break;
+               }
+            
+         }
+         if(existed == false) {
+            currline = i+7+sym_table.size();
+            //cout<<"line: "<<line<<endl;
+            cout<<"ERROR2: Line: "<< currline << 
+            " This variable "<<sym_table3[i].name<<" does not exist"<<endl;
+            exit(0);
+         }
+         existed = false;
+      }
+      
+   }
+}
+
+void check_exist() {
+   bool existed = false;
+   int currline = 0;
+   for(int i = 0; i < sym_table2.size(); i++) {
+      for(int j = 0; j < sym_table.size(); j++) {
+         //cout<<"Statement: "<<sym_table2[i].name<<", "<<sym_table[j].name<<endl;
+         currline = line; 
+         if(sym_table2[i].name == sym_table[j].name) {
+            existed = true;
+            break;
+         }
+         
+      }
+      if(existed == false) {
+         currline = i+7+sym_table.size();
+         //cout<<"line: "<<line<<endl;
+         cout<<"ERROR: Line: "<< currline << 
+         " This variable "<<sym_table2[i].name<<" does not exist"<<endl;
+         exit(0);
+      }
+      existed = false;
+      
+   }
+}
+
+void print_table() {
+   check_dup_table();
+   check_type();
+   check_exist();
+   check_existRHS();
 }
 
 %}
@@ -148,6 +305,7 @@ Program: Functions {
    //printf("Program -> Functions\n");
    CodeNode *node = $1;
    printf("%s\n", node->code.c_str()); 
+   
 
 };
 
@@ -155,13 +313,17 @@ Functions: %empty {
    //printf("Functions -> epsilon\n");
    CodeNode *node = new CodeNode;
    $$ = node;
+
 }  | Function Functions {
    //printf("Functions -> Function Functions\n");
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $2;
    CodeNode *node = new CodeNode;
-   node->code = code_node1->code + code_node2->code;
+   node->code = code_node1->code;
+   check_main();
+   node->code += code_node2->code;
    $$ = node;
+
 };
 
 Identifier: IDENT {
@@ -187,18 +349,13 @@ Function: FUNCTION Identifier SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEG
    std::string func_name = $2->code;
    node->code = "";
    node->code += std::string("func ") + func_name + std::string("\n");
-
-   //node->code += std::string("\n Begin Param \n");
+   add_main(func_name);
 
    CodeNode *declarations = $5;
    node->code += declarations->code;
 
-   //node->code += std::string("\n Begin Local \n");
-
    CodeNode *local_declarations = $8;
    node->code += local_declarations->code;
-
-   //node->code += std::string("\n Begin Body \n");
 
    CodeNode *statements = $11;
    node->code += statements->code;
@@ -207,7 +364,13 @@ Function: FUNCTION Identifier SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEG
 
    node->code += std::string("endfunc") + std::string("\n");
    $$ = node;
+   
+   //cout<<"Start SYMBOL TABLE--------------"<<endl;
+   print_table();
+   clear_vectors();
+   //cout<<"END SYMBOL TABLE--------------"<<endl;
 
+   
 };
 
 Declarations: %empty {
@@ -225,9 +388,10 @@ Declarations: %empty {
 
 Declaration: Identifiers COLON INTEGER {
    //printf("Declaration -> Identifiers COLON INTEGER\n");
-   //CodeNode *value = $1;
-   //Type t = Integer;
-   //add_variable_to_symbol_table(value, t);
+   CodeNode *value = $1;
+   Type t = Integer;
+   string name = value->code;
+   add_symb_table(1, name, t);
 
    CodeNode *code_node = new CodeNode;
    std::string id = $1->code;
@@ -236,6 +400,16 @@ Declaration: Identifiers COLON INTEGER {
 
 } | Identifiers COLON ARRAY L_SQUARE_BRACKET Term R_SQUARE_BRACKET OF INTEGER {
    //printf("Declaration -> Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER\n");
+   CodeNode *value = $1;
+   Type t = Array;
+   string name = value->code;
+   add_symb_table(1, name, t);
+   int a = stoi($5->code);
+   if(a <= 0) {
+      cout<<"ERROR: "<<4+sym_table.size()<<" SIZE IS <= 0"<<endl;
+      exit(0);
+   }
+   
    CodeNode *code_node = new CodeNode;
    CodeNode *node = $5;
    std::string id = $1->code;
@@ -273,25 +447,26 @@ Statement: Var ASSIGN Expression {
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
-   /*
-      a[0] = 1;
-      a = 1;
-   */
-   node->code = string("[=] ") + code_node1->code + string(", ") + code_node2->code + string("\n");
+
+   add_symb_table(2, $1->code, $1->func);
+   add_symb_table(3, $3->code, $3->func);
+   //need to add what happens if you assign an array out of its value ex:a[-1] := 1;
+   
+   node->code = string("= ") + code_node1->code + string(", ") + code_node2->code + string("\n");
    
    if(code_node2->func == Add || code_node2->func == Sub) {
       node->code = code_node2->code + string("\n") 
          + string("= ") + code_node1->code + string(", ") + code_node2->name + string("\n");
    
    } else if(code_node2->func == Mult || code_node2->func == Div || code_node2->func == Mod) {
-      printf("Mult in Statement");
+      //printf("Mult in Statement");
       node->code = code_node2->code + string("\n") + string("= ") 
          + code_node1->code + string(", ") + code_node2->name + string("\n");
 
 
    }
    if(code_node2->func == Params) {
-      printf("Param");
+      //printf("Param");
       node->code = string("") + code_node2->code + string("\n") 
          + string("= ") +  code_node1->code + string(", ") + code_node2->name + string("\n");
    }
@@ -304,8 +479,8 @@ Statement: Var ASSIGN Expression {
          node->code += string("[]= ") + code_node1->code + string(", ") + code_node2->name + string("\n");
       }
       if(code_node2->func == Mult) {
-         printf("Mult in Array in Statement");
-         //node->code = string("[.] ") + code_node2->name + string("\n");
+         //printf("Mult in Array in Statement");
+         //node->code = string(". ") + code_node2->name + string("\n");
          node->code = code_node2->code + string("\n");
          //node->code += string("[]= ") + code_node1->code + string(", ") 
          //   + code_node1->name + string("\n");
@@ -480,7 +655,7 @@ Expression: MultExp {
          + call_temp(1) + string(", ") + code_node2->code;
       node->name = *temp1;*/
 
-      printf("Array in Expression Add1 ");
+      //printf("Array in Expression Add1 ");
       string *temp2 = temp_gen();
       string *temp = temp_gen();
       node->code = string(". ") + *temp + string("\n");
@@ -494,7 +669,7 @@ Expression: MultExp {
       node->name2 = *temp1;
       
    } else {
-      printf("Else in Expression Add ");
+      //printf("Else in Expression Add ");
       string *temp = temp_gen();
       node->code = string(". ") + *temp + string("\n");
       node->code += string("+ ") + *temp + string(", ") 
@@ -539,9 +714,9 @@ MultExp: Term {
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
     if(code_node1->func == Array) {
-      printf("Mult in Array ");
+      //printf("Mult in Array ");
       //string *temp = temp_gen();
-      node->code = string("{.} ") + code_node2->name + string("\n");
+      node->code = string(". ") + code_node2->name + string("\n");
       node->code += string("=[] ") + code_node2->name + string(", ") + code_node1->code + string("\n");
       
       //string *temp2 = temp_gen();
@@ -573,7 +748,7 @@ MultExp: Term {
       node->name = *temp1;*/
       
    } else {
-      printf("Else ");
+      //printf("Else ");
       string *temp = temp_gen();
       node->code = string(". ") + *temp + string("\n");
       node->code += string("* ") + *temp + string(", ") 
@@ -661,7 +836,7 @@ Term:  Var {
    CodeNode *code_node2 = $4;
    CodeNode *code_node3 = $1;
    if(code_node2->func == Add) {
-      printf("Add in Param");
+      //printf("Add in Param");
       node->code = string("param ") + code_node1->code + string("\n")
          + code_node2->code + string("\n");
       //string *temp = temp_gen();
@@ -672,7 +847,7 @@ Term:  Var {
       node->name = *temp1;
 
    } else {
-      printf("Just Param");
+      //printf("Just Param");
       node->code = string("param ") + code_node1->code + string("\n")
          + string("param ") + code_node2->code + string("\n");
       string *temp = temp_gen();
@@ -680,6 +855,10 @@ Term:  Var {
       node->code += "call " + code_node3->code + string(", ") + *temp;
       node->name = *temp;
    }
+
+   string a = code_node3->code;
+   check_statement(a);
+
    node->func = Params;
    $$ = node;
 
@@ -690,7 +869,7 @@ Var: Identifier {
    CodeNode *node = new CodeNode;
    CodeNode *code_node1 = $1;
    node->code = code_node1->code;
-   node->func = code_node1->func;
+   node->func = Integer;
    node->name = code_node1->name;
    
    $$ = node;
@@ -719,31 +898,23 @@ Var: Identifier {
 
 string *temp_gen() {
    std::string* temp = new std::string();
-   *temp = std::string("__temp") + std::to_string(count) + std::string("");
-   count++;
+   *temp = std::string("__temp") + std::to_string(counts) + std::string("");
+   counts++;
    return temp;
 }
 
-//void writeChange(bool &b) {
-//   writeCheck = true;
-//}
-
-//bool writeChecks() {
-//   return writeCheck;
-//}
-
 string call_temp() {
    string temp = "";
-   return temp = std::string("__temp") + std::to_string((count)) + std::string("");
+   return temp = std::string("__temp") + std::to_string((counts)) + std::string("");
 }
 
 string call_temp(int x) {
    string temp = "";
-   return temp = std::string("__temp") + std::to_string((count-x)) + std::string("");
+   return temp = std::string("__temp") + std::to_string((counts-x)) + std::string("");
 }
 
 string decl_temp(string *s){
-   return "'" + *s + "\n";
+   return "" + *s + "\n";
 }
 
 string decl_temp2(string *s){
@@ -761,8 +932,8 @@ int main(int argc, char **argv) {
          printf("Error Open File %s\n", argv[0]);
       }
    }
-   print_symbol_table();
    yyparse();
+   //print_table();
    return 0;
 }
 
