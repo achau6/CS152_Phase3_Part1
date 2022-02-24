@@ -180,7 +180,7 @@ void check_statement(string node) {
    }
    if(word == true) {
       currline = 6 + 1 + sym_table.size() + sym_table2.size();
-      cout<<"ERROR: Line: "<< currline << " This is a reserve word "<<node<<endl;
+      cout<<"ERROR: Line: "<< currline << " This is a word function "<<node<<endl;
       exit(0);
    } 
 }
@@ -686,12 +686,42 @@ Expression: MultExp {
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
+   if(code_node1->func == Array) {
+      /*printf("Array in Expression Add ");
+      string *temp = temp_gen();
+      node->code = string(". ") + call_temp(0) + string("\n");
+      node->code += string("=[] ") + call_temp(0) + string(", ") + code_node1->code + string("\n");
+     
+      string *temp1 = temp_gen();
+      node->code += ". " + call_temp(0) + string("\n");
+      node->code += string("- ") + call_temp(0) + string(", ") 
+         + call_temp(1) + string(", ") + code_node2->code;
+      node->name = *temp1;*/
+
+      //printf("Array in Expression Add1 ");
+      string *temp2 = temp_gen();
+      string *temp = temp_gen();
+      node->code = string(". ") + *temp + string("\n");
+      node->code += string("=[] ") + *temp + string(", ") + code_node1->code + string("\n");
+     
+      string *temp1 = temp_gen();
+      node->code += ". " + *temp1 + string("\n");
+      node->code += string("- ") + *temp1 + string(", ") 
+         + *temp + string(", ") + code_node2->code;
+      node->name = *temp2;
+      node->name2 = *temp1;
+      
+   } else {
+      //printf("Else in Expression Add ");
+      string *temp = temp_gen();
+      node->code = string(". ") + *temp + string("\n");
+      node->code += string("- ") + *temp + string(", ") 
+         + code_node1->code + string(", ") + code_node2->code;
+      node->name = *temp;
+      node->ret = string("= ") + code_node1->code + string(", $0\n") 
+         + string("= ") + code_node2->code + string(", $1\n");   
+   }
    node->func = Sub;
-   string *temp = temp_gen();
-   node->code = string(". ") + *temp + string("\n");
-   node->code += string("- ") + *temp + string(", ") 
-      + code_node1->code + string(", ") + code_node2->code;
-   node->name = *temp;
    $$ = node;
 
 }; 
@@ -766,13 +796,52 @@ MultExp: Term {
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
+    if(code_node1->func == Array) {
+      //printf("Mult in Div ");
+      //string *temp = temp_gen();
+      node->code = string(". ") + code_node2->name + string("\n");
+      node->code += string("=[] ") + code_node2->name + string(", ") + code_node1->code + string("\n");
+      
+      //string *temp2 = temp_gen();
+      //node->code += string(". ") + *temp2 + string("\n");
+      //node->code += string("=[] ") + *temp2 + string(", ") + code_node2->code;
+      node->code += string("") + code_node2->code + string("\n");
+
+     
+      string *temp1 = temp_gen();
+      node->code += string(". ") + *temp1 + string("\n");
+      node->code += string("/ ") + *temp1 + string(", ") + code_node2->name + string(", ") 
+         + code_node2->name2 + string("\n");
+
+      node->code += string("[]= ") + code_node1->code + string(", ") + *temp1;
+      node->name = *temp1;
+
+      /*string *temp = temp_gen();
+      node->code = string(". ") + call_temp(3) + string("\n");
+      node->code += string("=[] ") + call_temp(3) + string(", ") + code_node1->code + string("\n");
+     
+      node->code += string("") + code_node2->code + string("\n");
+
+      string *temp1 = temp_gen();
+      node->code += string(". ") + call_temp(1) + string("\n");
+      node->code += string("/ ") + call_temp(1) + string(", ") + call_temp(4) + string(", ") 
+         + code_node2->name + string("\n");
+
+      node->code += string("[]= ") + code_node1->code + string(", ") + *temp1;
+      node->name = *temp1;*/
+      
+   } else {
+      //printf("Else ");
+      string *temp = temp_gen();
+      node->code = string(". ") + *temp + string("\n");
+      node->code += string("/ ") + *temp + string(", ") 
+         + code_node1->code + string(", ") + code_node2->code;
+      node->name = *temp;
+      node->ret = string("= ") + code_node1->code + string(", $0\n") 
+         + string("= ") + code_node2->code + string(", $1\n");
+   }
    node->func = Div;
-   string *temp = temp_gen();
-   node->code = string(". ") + *temp + string("\n");
-   node->code += string("/ ") + *temp + string(", ") 
-      + code_node1->code + string(", ") + code_node2->code;
-   node->name = *temp;
-  
+
    $$ = node;
 
 } | Term MOD Term{
@@ -780,13 +849,51 @@ MultExp: Term {
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
+    if(code_node1->func == Array) {
+      //string *temp = temp_gen();
+      node->code = string(". ") + code_node2->name + string("\n");
+      node->code += string("=[] ") + code_node2->name + string(", ") + code_node1->code + string("\n");
+      
+      //string *temp2 = temp_gen();
+      //node->code += string(". ") + *temp2 + string("\n");
+      //node->code += string("=[] ") + *temp2 + string(", ") + code_node2->code;
+      node->code += string("") + code_node2->code + string("\n");
+
+     
+      string *temp1 = temp_gen();
+      node->code += string(". ") + *temp1 + string("\n");
+      node->code += string("% ") + *temp1 + string(", ") + code_node2->name + string(", ") 
+         + code_node2->name2 + string("\n");
+
+      node->code += string("[]= ") + code_node1->code + string(", ") + *temp1;
+      node->name = *temp1;
+
+      /*string *temp = temp_gen();
+      node->code = string(". ") + call_temp(3) + string("\n");
+      node->code += string("=[] ") + call_temp(3) + string(", ") + code_node1->code + string("\n");
+     
+      node->code += string("") + code_node2->code + string("\n");
+
+      string *temp1 = temp_gen();
+      node->code += string(". ") + call_temp(1) + string("\n");
+      node->code += string("% ") + call_temp(1) + string(", ") + call_temp(4) + string(", ") 
+         + code_node2->name + string("\n");
+
+      node->code += string("[]= ") + code_node1->code + string(", ") + *temp1;
+      node->name = *temp1;*/
+      
+   } else {
+      //printf("Else ");
+      string *temp = temp_gen();
+      node->code = string(". ") + *temp + string("\n");
+      node->code += string("% ") + *temp + string(", ") 
+         + code_node1->code + string(", ") + code_node2->code;
+      node->name = *temp;
+      node->ret = string("= ") + code_node1->code + string(", $0\n") 
+         + string("= ") + code_node2->code + string(", $1\n");
+   }
    node->func = Mod;
-   string *temp = temp_gen();
-   node->code = string(". ") + *temp + string("\n");
-   node->code += string("% ") + *temp + string(", ") 
-      + code_node1->code + string(", ") + code_node2->code;
-   node->name = *temp;
-   
+
    $$ = node;
 
 }; 
