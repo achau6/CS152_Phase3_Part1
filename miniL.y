@@ -72,6 +72,7 @@ vector<collection> sym_table2;
 vector<collection> sym_table3;
 vector<string> main_hold;
 vector<int> hold;
+vector<string> errorMsg;
 
 void break_check() {
    bool flagCheck = false;
@@ -87,8 +88,9 @@ void break_check() {
    }
 
    if(flagCheck == true) {
-      cout<<"ERROR: Line: "<< currline << "Break before loop"<<endl;
-      exit(0);
+      string s = "ERROR: Line: " + to_string(currline) + " Break before loop";
+      errorMsg.push_back(s);
+      //exit(0);
    }
 }
 
@@ -117,6 +119,8 @@ void check_main() {
    }
    if(flag == false) {
       cout<<"There is no declare Main "<<endl;
+      //string s = "There is no declare Main ";
+      //errorMsg.push_back(s);
       exit(0);
    }
 }  
@@ -132,8 +136,10 @@ void add_symb_table(int i, string node, Type t) {
       }  
    }
    if(word == false) {
-      cout<<"ERROR: Line: "<< currline << " This is a reserve word"<<endl;
-      exit(0);
+      //cout<<"ERROR: Line: "<< currline << " This is a reserve word"<<endl;
+      string s = "ERROR: Line: " + to_string(currline) + " This is a reserve word";
+      errorMsg.push_back(s);
+      //exit(0);
    } else if (word == true) {
       if(i == 1) {
          sym_table.push_back({id, false, t});
@@ -159,8 +165,11 @@ void check_dup_table() {
             if(i != j) {
                if(sym_table[i].name == sym_table[j].name) {
                   currline = i + 4 + 1; //curr + statement + 1
-                  cout << "ERROR: Line: "<< currline << " Redefination of "<< sym_table[i].name << endl;
-                  exit(0);
+                  //cout << "ERROR: Line: "<< currline << " Redefination of "<< sym_table[i].name << endl;
+                  string s = "ERROR: Line: " + to_string(currline) 
+                     + " Redefination of " +  sym_table[i].name;
+                  errorMsg.push_back(s);
+                  //exit(0);
                }
             }
          }
@@ -174,14 +183,18 @@ void check_type() {
          if(sym_table2[i].name == sym_table[j].name && sym_table[j].type == Array) {
             if(sym_table2[i].type != Array) {
                currline = i + 7 + sym_table.size();
-               cout<<"ERROR: Line: "<< currline << " Array should have index"<<endl;
-               exit(0);
+               //cout<<"ERROR: Line: "<< currline << " Array should have index"<<endl;
+               string s = "ERROR: Line: " + to_string(currline) + " Array should have index";
+               errorMsg.push_back(s);
+               //exit(0);
             } 
          } else if(sym_table2[i].name == sym_table[j].name && sym_table[j].type == Integer) {
             if(sym_table2[i].type != Integer) {
                currline = i + 7 + sym_table.size();
-               cout<<"ERROR: Line: "<<sym_table2[i].name<<" "<< currline << " Integer should not have index"<<endl;
-               exit(0);
+               //cout<<"ERROR: Line: "<<sym_table2[i].name<<" "<< currline << " Integer should not have index"<<endl;
+               string s = "ERROR: Line: "+ sym_table2[i].name + " " + to_string(currline) + " Integer should not have index";
+               
+               //exit(0);
             }
          }
       }
@@ -201,8 +214,10 @@ void check_statement(string node) {
    }
    if(word == true) {
       currline = 6 + 1 + sym_table.size() + sym_table2.size();
-      cout<<"ERROR: Line: "<< currline << " This is a word function "<<node<<endl;
-      exit(0);
+      //cout<<"ERROR: Line: "<< currline << " This is a word function "<<node<<endl;
+      string s = "ERROR: Line: " + to_string(currline) + " This is a word function " + node;
+      errorMsg.push_back(s);
+      //exit(0);
    } 
 }
 
@@ -224,9 +239,12 @@ void check_existRHS() {
          if(existed == false) {
             currline = i+7+sym_table.size();
             //cout<<"line: "<<line<<endl;
-            cout<<"ERROR2: Line: "<< currline << 
-            " This variable "<<sym_table3[i].name<<" does not exist"<<endl;
-            exit(0);
+            //cout<<"ERROR2: Line: "<< currline << 
+            //" This variable "<<sym_table3[i].name<<" does not exist"<<endl;
+            string s = "ERROR: Line: " + to_string(currline) + " This variable " 
+               + sym_table3[i].name + " does not exist";
+            errorMsg.push_back(s);
+            //exit(0);
          }
          existed = false;
       }
@@ -250,9 +268,12 @@ void check_exist() {
       if(existed == false) {
          currline = i+7+sym_table.size();
          //cout<<"line: "<<line<<endl;
-         cout<<"ERROR: Line: "<< currline << 
-         " This variable "<<sym_table2[i].name<<" does not exist"<<endl;
-         exit(0);
+         //cout<<"ERROR: Line: "<< currline << 
+         //" This variable "<<sym_table2[i].name<<" does not exist"<<endl;
+         string s = "ERROR: Line: " + to_string(currline)  
+            + " This variable " + sym_table2[i].name + " does not exist";
+         errorMsg.push_back(s);
+         //exit(0);
       }
       existed = false;
       
@@ -265,6 +286,12 @@ void print_table() {
    check_exist();
    check_existRHS();
    break_check();
+   if(errorMsg.size() != NULL) {
+      for(int i = 0; i < errorMsg.size(); i ++) {
+         cout<<errorMsg[i]<<endl;
+      }
+      exit(0);
+   }
 }
 
 %}
