@@ -1,0 +1,16 @@
+func main
+. i
+= i, 0
+: beginloop0
+. _temp0
+< _temp0, i, 10
+?:= loopbody0, _temp0
+:= endloop0
+: loopbody0
+. _temp1
++ _temp1, i, 1
+= i, _temp1
+.> i
+:= beginloop0
+: endloop0
+endfunc

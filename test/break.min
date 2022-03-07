@@ -1,0 +1,23 @@
+## This is a simple loop with a break statement
+
+function main;
+beginparams
+endparams
+beginlocals
+
+i : integer;
+
+endlocals
+beginbody
+
+  i := 0;
+  while i <= 10 beginloop
+    write i;
+    if i > 2 then
+      break;
+    endif;
+
+    i := i + 1;
+  endloop;
+
+endbody

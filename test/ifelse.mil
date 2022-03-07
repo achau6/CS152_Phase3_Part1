@@ -1,0 +1,18 @@
+func main
+. a
+. b
+. c
+= a, 100
+= b, 50
+. _temp0
+< _temp0, a, b
+?:= if_true0, _temp0
+:= else0
+: if_true0
+= c, b
+:= endif0
+: else0
+= c, a
+: endif0
+.> c
+endfunc

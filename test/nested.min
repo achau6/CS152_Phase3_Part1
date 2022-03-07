@@ -1,0 +1,26 @@
+## This is a nested loop 
+
+function main;
+beginparams
+endparams
+beginlocals
+
+i : integer;
+j : integer;
+
+endlocals
+beginbody
+
+  i := 0;
+  while i < 2 beginloop
+
+    j := 1;
+    while j <= 3 beginloop
+      write j;
+      j := j + 1;
+    endloop;
+
+    i := i + 1;
+  endloop;
+
+endbody

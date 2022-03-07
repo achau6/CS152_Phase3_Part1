@@ -25,19 +25,18 @@ string decl_temp2(string s);
 string call_temp();
 string call_temp(int x);
 int counts = 0;
+int ifCount = 0;
+int whileCount = 0;
+int varCount = 0;
 enum Type { Integer, Array, Add, Mult, Sub, Div, Mod, Params };
 vector<string> reserve_words { 
    "pee", "function", "beginparams", "endparams", "beginlocals", "endlocals", "beginbody", "endbody", "integer", "array", "of", "if", "then", "endif", "else", "while", "do", "beginloop", "endloop", "continue", "break", "read", "write", "not", "true", "false", "return"
 };
 
 vector<string> confirm_words {
-   "add", "sub", "mult", "div", "mod"
+   "add", "sub", "mult", "div", "mod", "fibonacci"
 };
 
-//make sure 1 main is declare X
-//make sure rhs var is validate X <- technically
-//array <= 0 X
-//validate functions like add() and not addy() X
 
 struct CodeNode {
     std::string name;
@@ -46,6 +45,7 @@ struct CodeNode {
     Type type;
     Type func;
     string ret;
+    bool flag = false;
 };
 
 void add_symb_table(int i, string node, Type t);
@@ -59,6 +59,7 @@ void add_main(string node);
 void check_main();
 void clear_vectors();
 void print_sym_table();
+void break_check();
 
 struct collection {
    string name;
@@ -70,6 +71,23 @@ vector<collection> sym_table;
 vector<collection> sym_table2;
 vector<collection> sym_table3;
 vector<string> main_hold;
+vector<int> hold;
+
+void break_check() {
+   bool flagCheck = false;
+   for(int i = 0; i < hold.size(); i ++) {
+      if(hold[i] == 1) {
+         if(hold[i-1] != 0) {
+            flagCheck = true;
+         }
+      }
+   }
+
+   if(flagCheck == true) {
+      cout<<"ERROR: Break before loop"<<endl;
+      exit(0);
+   }
+}
 
 void clear_vectors() {
    cout<<"Start SYMBOL TABLE--------------"<<endl;
@@ -243,6 +261,7 @@ void print_table() {
    check_type();
    check_exist();
    check_existRHS();
+   break_check();
 }
 
 %}
@@ -427,6 +446,7 @@ Statements: %empty {
    CodeNode *code_node1 = $1;
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
+   node->flag = code_node1->flag;
    node->code = code_node1->code + code_node2->code;
    $$ = node;
 };
@@ -434,12 +454,15 @@ Statements: %empty {
 ElseStatement: ELSE Statements {
    //printf("ElseStatement -> ELSE Statements\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("*= ");
+   CodeNode *code_node1 = $2;
+   //node->code += std::string(":= else[0] \n");
+   node->code += code_node1->code;
    $$ = node;
 
 } | %empty {
    //printf("ElseStatement -> epsilon\n");
    CodeNode *node = new CodeNode;
+   //node->code += std::string(":= endif0 \n");
    $$ = node;
 };
 Statement: Var ASSIGN Expression {
@@ -493,26 +516,85 @@ Statement: Var ASSIGN Expression {
 } | IF BoolExp THEN Statements ElseStatement ENDIF {
    //printf("Statement -> IF BoolExp THEN Statements ElseStatement ENDIF\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("*= ");
+   CodeNode *code_node1 = $2;
+   CodeNode *code_node2 = $4;
+   CodeNode *code_node3 = $5;
+
+   //node->code = std::string(": beginloop0 \n");
+
+   node->code += code_node1->code + string("\n");
+   node->code += string("?:= if_true") + to_string(ifCount) + string(", ") 
+      + code_node1->name + string("\n");
+   
+   if(code_node3->code != "") {
+      node->code += string(":= else0\n");
+   } else {
+      node->code += string(":= endif0\n");
+   }
+
+   node->code += string(": if_true") + to_string(ifCount) + string("\n");
+   node->code += code_node2->code;
+
+   if(code_node2->flag == false) {
+      node->code += std::string(":= endif") + to_string(ifCount) + string("\n");;
+
+      node->code += std::string(":= else") + to_string(ifCount) + string("\n");;
+   }
+
+   node->code += code_node3->code;
+
+   node->code += std::string(": endif") + to_string(ifCount) + string("\n");;
    $$ = node;
+   ifCount += 1;
+   hold.push_back(0);
 
 } | WHILE BoolExp BEGINLOOP Statements ENDLOOP {
    //printf("Statement -> WHILE BoolExp BEGINLOOP Statements ENDLOOP\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("*= ");
+   CodeNode *code_node1 = $2;
+   CodeNode *code_node2 = $4;
+   node->code = std::string(": beginloop") + to_string(whileCount) + string("\n");
+
+   node->code += code_node1->code + string("\n");
+   node->code += string("?:= loopbody") + to_string(whileCount) + string(", ")
+      + code_node1->name + string("\n");
+   node->code += string(":= endloop") + to_string(whileCount) + string("\n");
+   
+   node->code += string(": loopbody") + to_string(whileCount) + string("\n");
+   node->code += code_node2->code;
+
+   node->code += std::string(":= beginloop") + to_string(whileCount) + string("\n");
+   node->code += std::string(": endloop") + to_string(whileCount) + string("\n");
    $$ = node;
+   whileCount += 1;
+   hold.push_back(0);
 
 } | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp {
    //printf("Statement -> DO BEGINLOOP Statements ENDLOOP WHILE BoolExp\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("*= ");
+   CodeNode *code_node1 = $3;
+   CodeNode *code_node2 = $6;
+   node->code = std::string(": beginloop") + to_string(whileCount) + string("\n");
+
+   node->code += code_node1->code + string("\n");
+   node->code += string("?:= loopbody") + to_string(whileCount) + string(", ")
+      + code_node1->name + string("\n");
+   node->code += string(":= endloop") + to_string(whileCount) + string("\n");
+   
+   node->code += string(": loopbody") + to_string(whileCount) + string("\n");
+   node->code += code_node2->code;
+
+   node->code += std::string(":= beginloop") + to_string(whileCount) + string("\n");
+   node->code += std::string(": endloop") + to_string(whileCount) + string("\n");
    $$ = node;
+   whileCount += 1;
+   hold.push_back(0);
 
 } | READ Var {
    //printf("Statement -> READ Var\n");
    CodeNode *code_node1 = $2;
    CodeNode *node = new CodeNode;
-   node->code = std::string("!!= ") + code_node1->code;
+   node->code = std::string(".< ") + code_node1->code + string("\n");
    $$ = node;
 
 } | WRITE Var {
@@ -532,21 +614,32 @@ Statement: Var ASSIGN Expression {
 } | CONTINUE {
    //printf("Statement -> CONTINUE\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("= ");
+   node->code = std::string(":= endloop0\n");
+   node->flag = true;
+   hold.push_back(1);
    $$ = node;
 
 } | BREAK {
    //printf("Statement -> BREAK\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("= ");
+   node->code = std::string(":= endloop0\n");
+   node->flag = true;
+   hold.push_back(1);
    $$ = node;
+   
 
 } | RETURN Expression {
    //printf("Statement -> RETURN Expression\n");
    CodeNode *node = new CodeNode;
    CodeNode *code_node1 = $2;
-   node->code = code_node1->ret + string("") + code_node1->code + string("\n") 
-      + std::string("ret ") + code_node1->name + string("\n");
+   
+   if(code_node1->func == Sub || code_node1->func == Add) {
+      node->code += code_node1->code + string("\n") + string("ret ") + code_node1->name + string("\n");
+   } else {
+      node->code = std::string("ret ") + code_node1->code + string("\n");
+   }
+   
+   node->flag = true;
    $$ = node;
 
 };
@@ -555,16 +648,22 @@ Statement: Var ASSIGN Expression {
 BoolExp: Expression Comp Expression {
    //printf("BoolExp -> Expression Comp Expression\n");
    CodeNode *code_node1 = $1;
-   CodeNode *code_node2 = $3;
+   CodeNode *code_node2 = $2;
+   CodeNode *code_node3 = $3;
    CodeNode *node = new CodeNode;
-   node->code = code_node1->code + code_node2->code;
+   string *temp = temp_gen();
+   //node->code += string("= ") + code_node1->code + string(", $") + to_string(varCount) + string("\n");
+   node->code += string(". ") + *temp +string("\n");
+   node->code += code_node2->code + *temp + string(", ") + code_node1->code + string(", ") + code_node3->code;
+   node->name = *temp;
    $$ = node;
+   
 
 } | NOT BoolExp {
    //printf("BoolExp -> NOT BoolExp\n");
    CodeNode *code_node1 = $2;
    CodeNode *node = new CodeNode;
-   node->code = $2->code + std::string("++");
+   node->code = code_node1->code;
    $$ = code_node1;
 
 };
@@ -572,36 +671,36 @@ BoolExp: Expression Comp Expression {
 Comp: ASSIGN {
    //printf("Comp -> ASSIGN\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("+= ");
+   node->code = std::string(":= ");
    $$ = node;
 
 } | NEQ {
    //printf("Comp -> NEQ\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("+= ");
+   node->code = std::string("!= ");
    $$ = node;
 } | LT {
    //printf("Comp -> LT\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("+= ");
+   node->code = std::string("< ");
    $$ = node;
 
 } | GT {
    //printf("Comp -> GT\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("+= ");
+   node->code = std::string("> ");
    $$ = node;
 
 } | LTE {
    //printf("Comp -> LTE\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("+= ");
+   node->code = std::string("<= ");
    $$ = node;
 
 } | GTE {
    //printf("Comp -> GTE\n");
    CodeNode *node = new CodeNode;
-   node->code = std::string("+= ");
+   node->code = std::string(">= ");
    $$ = node;
 
 }  | EQ {
@@ -668,6 +767,16 @@ Expression: MultExp {
       node->name = *temp2;
       node->name2 = *temp1;
       
+   } else if(code_node1->func == Params) {
+      printf("Param In Expression Add ");
+      node->code = code_node1->code + string("\n");
+      node->code += code_node2->code + string("\n");
+      string *temp = temp_gen();
+      node->code += string(". ") + *temp + string("\n");
+      node->code += string("+ ") + *temp + string(", ") 
+         + code_node1->name + string(", ") + code_node2->name;
+      node->name = *temp;
+
    } else {
       //printf("Else in Expression Add ");
       string *temp = temp_gen();
@@ -687,7 +796,7 @@ Expression: MultExp {
    CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
    if(code_node1->func == Array) {
-      /*printf("Array in Expression Add ");
+      /*printf("Array in Expression Sub ");
       string *temp = temp_gen();
       node->code = string(". ") + call_temp(0) + string("\n");
       node->code += string("=[] ") + call_temp(0) + string(", ") + code_node1->code + string("\n");
@@ -698,7 +807,7 @@ Expression: MultExp {
          + call_temp(1) + string(", ") + code_node2->code;
       node->name = *temp1;*/
 
-      //printf("Array in Expression Add1 ");
+      printf("Array in Expression Sub1 ");
       string *temp2 = temp_gen();
       string *temp = temp_gen();
       node->code = string(". ") + *temp + string("\n");
@@ -712,11 +821,12 @@ Expression: MultExp {
       node->name2 = *temp1;
       
    } else {
-      //printf("Else in Expression Add ");
+      printf("Else in Expression Sub ");
       string *temp = temp_gen();
       node->code = string(". ") + *temp + string("\n");
       node->code += string("- ") + *temp + string(", ") 
-         + code_node1->code + string(", ") + code_node2->code;
+        + code_node1->code + string(", ") + code_node2->code;
+      //node->code += code_node2->code;
       node->name = *temp;
       node->ret = string("= ") + code_node1->code + string(", $0\n") 
          + string("= ") + code_node2->code + string(", $1\n");   
@@ -929,11 +1039,23 @@ Term:  Var {
 
 } | Identifier L_PAREN Expression R_PAREN {
    //printf("Term -> L_PAREN Expression R_PAREN\n");
-   CodeNode *code_node1 = $1;
-   CodeNode *code_node2 = $3;
    CodeNode *node = new CodeNode;
-   node->code = code_node1->code;
-   //node->func = Params;
+   CodeNode *code_node1 = $3;
+   CodeNode *code_node3 = $1;
+
+   node->code = code_node1->code + string("\n");
+   //string *temp = temp_gen();
+   node->code += string("param ") + code_node1->name + string("\n");
+   string *temp = temp_gen();
+   node->code += ". " + *temp + string("\n");
+   node->code += "call " + code_node3->code + string(", ") + *temp;
+   node->name = *temp;
+   
+
+   string a = code_node3->code;
+   check_statement(a);
+
+   node->func = Params;
    $$ = node;
 
 } | Identifier L_PAREN Expression Expressions R_PAREN { /*Check this rule*/
@@ -943,7 +1065,7 @@ Term:  Var {
    CodeNode *code_node2 = $4;
    CodeNode *code_node3 = $1;
    if(code_node2->func == Add) {
-      //printf("Add in Param");
+      printf("Add in Param");
       node->code = string("param ") + code_node1->code + string("\n")
          + code_node2->code + string("\n");
       //string *temp = temp_gen();
@@ -954,7 +1076,7 @@ Term:  Var {
       node->name = *temp1;
 
    } else {
-      //printf("Just Param");
+      printf("Just Param");
       node->code = string("param ") + code_node1->code + string("\n")
          + string("param ") + code_node2->code + string("\n");
       string *temp = temp_gen();
@@ -978,7 +1100,7 @@ Var: Identifier {
    node->code = code_node1->code;
    node->func = Integer;
    node->name = code_node1->name;
-   
+   node->ret = code_node1->code;
    $$ = node;
    
 

@@ -1,0 +1,34 @@
+func fibonacci
+. k
+= k, $0
+. _temp0
+<= _temp0, k, 1
+?:= if_true0, _temp0
+:= endif0
+: if_true0
+ret 1
+: endif0
+. _temp1
+- _temp1, k, 1
+param _temp1
+. _temp2
+call fibonacci, _temp2
+. _temp3
+- _temp3, k, 2
+param _temp3
+. _temp4
+call fibonacci, _temp4
+. _temp5
++ _temp5, _temp2, _temp4
+ret _temp5
+endfunc
+func main
+. n
+. fib_n
+.< n
+param n
+. _temp6
+call fibonacci, _temp6
+= fib_n, _temp6
+.> fib_n
+endfunc
