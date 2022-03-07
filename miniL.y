@@ -614,6 +614,7 @@ Statement: Var ASSIGN Expression {
 } | CONTINUE {
    //printf("Statement -> CONTINUE\n");
    CodeNode *node = new CodeNode;
+   //node->code = std::string(":= endloop") + to_string(ifCount) + string("/n");
    node->code = std::string(":= endloop0\n");
    node->flag = true;
    hold.push_back(1);
@@ -622,6 +623,7 @@ Statement: Var ASSIGN Expression {
 } | BREAK {
    //printf("Statement -> BREAK\n");
    CodeNode *node = new CodeNode;
+   //node->code = std::string(":= endloop") + to_string(ifCount) + string("/n");
    node->code = std::string(":= endloop0\n");
    node->flag = true;
    hold.push_back(1);
