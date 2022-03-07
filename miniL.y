@@ -75,16 +75,19 @@ vector<int> hold;
 
 void break_check() {
    bool flagCheck = false;
+   int currline = 0;
    for(int i = 0; i < hold.size(); i ++) {
       if(hold[i] == 1) {
          if(hold[i-1] != 0) {
             flagCheck = true;
+            currline = i+7+hold.size();
+            break;
          }
       }
    }
 
    if(flagCheck == true) {
-      cout<<"ERROR: Break before loop"<<endl;
+      cout<<"ERROR: Line: "<< currline << "Break before loop"<<endl;
       exit(0);
    }
 }
