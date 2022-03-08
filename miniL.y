@@ -193,7 +193,7 @@ void check_type() {
                currline = i + 7 + sym_table.size();
                //cout<<"ERROR: Line: "<<sym_table2[i].name<<" "<< currline << " Integer should not have index"<<endl;
                string s = "ERROR: Line: "+ sym_table2[i].name + " " + to_string(currline) + " Integer should not have index";
-               
+               errorMsg.push_back(s);
                //exit(0);
             }
          }
